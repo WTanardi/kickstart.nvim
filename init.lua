@@ -83,6 +83,12 @@ vim.keymap.set('n', 'C-s', '<cmd>w<CR>')
 -- Remap ctrl+backspace to delete word
 vim.keymap.set('i', 'C-h', 'C-w')
 
+-- Remap yaf to yank paragraph
+vim.keymap.set('n', 'yaf', 'va{Vy', { desc = 'Yank a [F]unction' })
+
+-- Remap leader+y to copy to clipboar
+vim.keymap.set('n', '<leader>y', '"*y', { desc = 'Copy to system clipboard' })
+
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
 
