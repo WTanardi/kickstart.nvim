@@ -4,7 +4,7 @@
 vim.keymap.set('i', 'jj', '<Esc>')
 
 -- Remap neotree open
-vim.keymap.set('n', '<leader>t', '<cmd>NvimTreeFocus<CR>')
+vim.keymap.set('n', '<leader>t', '<cmd>lua MiniFiles.open()<CR>')
 
 -- Remap ctrl+s to save
 vim.keymap.set('n', 'C-s', '<cmd>w<CR>')
@@ -26,6 +26,3 @@ vim.keymap.set('n', '<leader>bd', '<cmd>bdelete<CR>', { desc = 'Delete current b
 
 -- Remap <leader>bd to delete current buffer
 vim.keymap.set('n', ',,', '<c-t>', { desc = 'Jump back to definition' })
-
--- Remap - to open current file in directory
-vim.keymap.set('n', '-', '<cmd>NvimTreeFindFile<CR>', { desc = 'Open current file in tree' })

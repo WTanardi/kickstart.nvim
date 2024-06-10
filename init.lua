@@ -328,37 +328,6 @@ require('lazy').setup({
     end,
   },
 
-  { -- Collection of various small independent plugins/modules
-    'echasnovski/mini.nvim',
-    config = function()
-      -- Better Around/Inside textobjects
-      require('mini.ai').setup { n_lines = 500 }
-
-      -- Add/delete/replace surroundings (brackets quotes, etc.)
-      require('mini.surround').setup()
-
-      -- Simple and easy statusline.
-      local statusline = require 'mini.statusline'
-
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
-
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
-
-      -- Autopairs
-      require('mini.pairs').setup()
-
-      -- Comment
-      require('mini.comment').setup()
-
-      -- Tabline
-      require('mini.tabline').setup()
-    end,
-  },
-
   { -- Highlight edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
@@ -422,6 +391,52 @@ require('lazy').setup({
 
   { -- Import custom plugins
     import = 'custom.plugins',
+  },
+  { -- Collection of various small independent plugins/modules
+    'echasnovski/mini.nvim',
+    config = function()
+      -- Better Around/Inside textobjects
+      require('mini.ai').setup { n_lines = 500 }
+
+      -- Add/delete/replace surroundings (brackets quotes, etc.)
+      require('mini.surround').setup()
+
+      -- Simple and easy statusline.
+      local statusline = require 'mini.statusline'
+
+      -- set use_icons to true if you have a Nerd Font
+      statusline.setup { use_icons = vim.g.have_nerd_font }
+
+      ---@diagnostic disable-next-line: duplicate-set-field
+      statusline.section_location = function()
+        return '%2l:%-2v'
+      end
+
+      -- Autopairs
+      require('mini.pairs').setup()
+
+      -- Comment
+      require('mini.comment').setup()
+
+      -- Tabline
+      require('mini.tabline').setup()
+
+      -- Filetree
+      require('mini.files').setup()
+
+      -- Starter
+      require('mini.starter').setup {
+        header = 'I use neovim btw',
+        items = {
+          { name = 'New file', action = 'ene', section = '' },
+          { name = 'Find files', action = ':Telescope find_files', section = '' },
+          { name = 'Recent files', action = ':Telescope oldfiles', section = '' },
+          { name = 'Grep string', action = ':Telescope live_grep', section = '' },
+          { name = 'Lazy', action = ':Lazy', section = '' },
+          { name = 'Quit', action = ':qa!', section = '' },
+        },
+      }
+    end,
   },
 }, {
   ui = {
