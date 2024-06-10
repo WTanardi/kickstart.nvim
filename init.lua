@@ -1,69 +1,6 @@
--- Vim globals
-local globals = {
-  mapleader = ' ',
-  maplocalleader = ' ',
-  have_nerd_font = true,
-}
-
-for g, value in pairs(globals) do
-  vim.g[g] = value
-end
-
--- Vim options
-local opts = {
-  number = true,
-  relativenumber = true,
-  mouse = 'a',
-  showmode = false,
-  breakindent = true,
-  undofile = true,
-  ignorecase = true,
-  smartcase = true,
-  signcolumn = 'yes',
-  updatetime = 250,
-  timeoutlen = 300,
-  list = true,
-  listchars = { tab = '» ', trail = '·', nbsp = '␣' },
-  inccommand = 'split',
-  cursorline = true,
-  scrolloff = 10,
-  termguicolors = true,
-  hlsearch = true,
-}
-
-for opt, value in pairs(opts) do
-  vim.opt[opt] = value
-end
-
--- Remap jj to Escape
-vim.keymap.set('i', 'jj', '<Esc>')
-
--- Remap neotree open
-vim.keymap.set('n', '<leader>t', '<cmd>Neotree focus<CR>')
-
--- Remap ctrl+s to save
-vim.keymap.set('n', 'C-s', '<cmd>w<CR>')
-
--- Remap ctrl+backspace to delete word
-vim.keymap.set('i', 'C-h', 'C-w')
-
--- Remap yaf to yank paragraph
-vim.keymap.set('n', 'yaf', 'va{Vy', { desc = 'Yank a [F]unction' })
-
--- Remap leader+y to copy to clipboar
-vim.keymap.set('n', '<leader>y', '"*y', { desc = 'Copy to system clipboard' })
-
--- Remap tab to go to next buffer
-vim.keymap.set('n', '<tab>', '<cmd>bnext<CR>', { desc = 'Go to next buffer' })
-
--- Remap tab to go to previous buffer
-vim.keymap.set('n', '<S-Tab>', '<cmd>bprevious<CR>', { desc = 'Go to previous buffer' })
-
--- Remap <leader>bd to delete current buffer
-vim.keymap.set('n', '<leader>bd', '<cmd>bdelete<CR>', { desc = 'Delete current buffer' })
-
--- Remap <leader>bd to delete current buffer
-vim.keymap.set('n', ',,', '<c-t>', { desc = 'Jump back to definition' })
+require 'core.globals'
+require 'core.options'
+require 'core.keymaps'
 
 -- [[ Basic Autocommands ]]
 -- Highlight when yanking (copying) text
@@ -88,11 +25,6 @@ require('lazy').setup({
     'tpope/vim-sleuth',
   },
 
-  { -- "gc" to comment visual regions/lines
-    'numToStr/Comment.nvim',
-    opts = {},
-  },
-
   { -- Adds git related signs to the gutter as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -104,23 +36,6 @@ require('lazy').setup({
         changedelete = { text = '~' },
       },
     },
-  },
-
-  { -- Useful plugin to show you pending keybinds.
-    'folke/which-key.nvim',
-    event = 'VimEnter', -- Sets the loading event to 'VimEnter'
-    config = function() -- This is the function that runs, AFTER loading
-      require('which-key').setup()
-
-      -- Document existing key chains
-      require('which-key').register {
-        ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-        ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-        ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]earch', _ = 'which_key_ignore' },
-        ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-      }
-    end,
   },
 
   { -- Fuzzy Finder (files lsp, etc)
@@ -436,6 +351,9 @@ require('lazy').setup({
       -- Autopairs
       require('mini.pairs').setup()
 
+      -- Comment
+      require('mini.comment').setup()
+
       -- Tabline
       require('mini.tabline').setup()
     end,
@@ -462,6 +380,44 @@ require('lazy').setup({
 
   { -- Code context
     'nvim-treesitter/nvim-treesitter-context',
+  },
+
+  { -- Prettier Errors
+    'folke/trouble.nvim',
+    opts = {}, -- for default options, refer to the configuration section for custom setup.
+    cmd = 'Trouble',
+    keys = {
+      {
+        '<leader>xx',
+        '<cmd>Trouble diagnostics toggle<cr>',
+        desc = 'Diagnostics (Trouble)',
+      },
+      {
+        '<leader>xX',
+        '<cmd>Trouble diagnostics toggle filter.buf=0<cr>',
+        desc = 'Buffer Diagnostics (Trouble)',
+      },
+      {
+        '<leader>cs',
+        '<cmd>Trouble symbols toggle focus=false<cr>',
+        desc = 'Symbols (Trouble)',
+      },
+      {
+        '<leader>cl',
+        '<cmd>Trouble lsp toggle focus=false win.position=right<cr>',
+        desc = 'LSP Definitions / references / ... (Trouble)',
+      },
+      {
+        '<leader>xL',
+        '<cmd>Trouble loclist toggle<cr>',
+        desc = 'Location List (Trouble)',
+      },
+      {
+        '<leader>xQ',
+        '<cmd>Trouble qflist toggle<cr>',
+        desc = 'Quickfix List (Trouble)',
+      },
+    },
   },
 
   { -- Import custom plugins
