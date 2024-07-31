@@ -20,6 +20,15 @@ if not vim.loop.fs_stat(lazypath) then
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
+-- Open neovim to find_files
+vim.api.nvim_create_autocmd('VimEnter', {
+  callback = function()
+    if vim.fn.argv(0) == '' then
+      require('telescope.builtin').find_files()
+    end
+  end,
+})
+
 require('lazy').setup({
   { -- Detect tabstop and shiftwidth automatically
     'tpope/vim-sleuth',
@@ -77,28 +86,8 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
-      vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
-      vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
-      vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>so', builtin.oldfiles, { desc = '[S]earch [O]ld Files' })
       vim.keymap.set('n', '<leader><leader>', builtin.find_files, { desc = '[S]earch [F]iles' })
-
-      vim.keymap.set('n', '<leader>/', function()
-        builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-          winblend = 10,
-          previewer = false,
-        })
-      end, { desc = '[/] Fuzzily search in current buffer' })
-
-      vim.keymap.set('n', '<leader>s/', function()
-        builtin.live_grep {
-          grep_open_files = true,
-          prompt_title = 'Live Grep in Open Files',
-        }
-      end, { desc = '[S]earch [/] in Open Files' })
-
-      vim.keymap.set('n', '<leader>sn', function()
-        builtin.find_files { cwd = vim.fn.stdpath 'config' }
-      end, { desc = '[S]earch [N]eovim files' })
     end,
   },
 
@@ -134,29 +123,12 @@ require('lazy').setup({
           -- Jump to the implementation of the word under your cursor.
           map('gI', require('telescope.builtin').lsp_implementations, '[G]oto [I]mplementation')
 
-          -- Jump to the type of the word under your cursor.
-          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
-
-          -- Fuzzy find all the symbols in your current document.
-          map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
-
-          -- Fuzzy find all the symbols in your current workspace.
-          map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
-
           -- Rename the variable under your cursor.
           map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
-
-          -- Execute a code action usually your cursor needs to be on top of an error
-          -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
 
           -- Opens a popup that displays documentation about the word under your cursor
           --  See `:help K` for why this keymap.
           map('K', vim.lsp.buf.hover, 'Hover Documentation')
-
-          -- WARN: This is not Goto Definition this is Goto Declaration.
-          --  For example in C this would take you to the header.
-          map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
           -- The following two autocommands are used to highlight references of the
           -- word under your cursor when your cursor rests there for a little while.
@@ -194,6 +166,10 @@ require('lazy').setup({
         tailwindcss = {},
         html = {},
         htmx = {},
+        jsonls = {},
+        eslint = {},
+        emmet_language_server = {},
+        markdownlint = {},
       }
       -- Ensure the servers and tools above are installed
       require('mason').setup()
@@ -205,34 +181,75 @@ require('lazy').setup({
         'stylua', -- Used to format Lua code
         'prettierd',
       })
+
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
         handlers = {
           function(server_name)
             local server = servers[server_name] or {}
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {}), require('lspconfig')[server_name].setup(server)
+            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+            require('lspconfig')[server_name].setup(server)
           end,
         },
       }
+
+      require('lspconfig').emmet_language_server.setup {
+        filetypes = { 'css', 'eruby', 'html', 'javascript', 'javascriptreact', 'less', 'sass', 'scss', 'pug', 'typescriptreact' },
+        -- Read more about this options in the [vscode docs](https://code.visualstudio.com/docs/editor/emmet#_emmet-configuration).
+        -- **Note:** only the options listed in the table are supported.
+        init_options = {
+          ---@type table<string, string>
+          includeLanguages = {},
+          --- @type string[]
+          excludeLanguages = {},
+          --- @type string[]
+          extensionsPath = {},
+          --- @type table<string, any> [Emmet Docs](https://docs.emmet.io/customization/preferences/)
+          preferences = {},
+          --- @type boolean Defaults to `true`
+          showAbbreviationSuggestions = true,
+          --- @type "always" | "never" Defaults to `"always"`
+          showExpandedAbbreviation = 'always',
+          --- @type boolean Defaults to `false`
+          showSuggestionsAsSnippets = false,
+          --- @type table<string, any> [Emmet Docs](https://docs.emmet.io/customization/syntax-profiles/)
+          syntaxProfiles = {},
+          --- @type table<string, string> [Emmet Docs](https://docs.emmet.io/customization/snippets/#variables)
+          variables = {},
+        },
+      }
+
+      vim.o.updatetime = 250
+      vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
+        group = vim.api.nvim_create_augroup('float_diagnostic', { clear = true }),
+        callback = function()
+          vim.diagnostic.open_float(nil, { focus = false })
+        end,
+      })
+
+      vim.lsp.handlers['textDocument/hover'] = vim.lsp.with(vim.lsp.handlers.hover, { border = 'rounded' })
     end,
   },
 
   { -- Autoformat
     'stevearc/conform.nvim',
+    event = { 'BufWritePre' },
+    cmd = { 'ConformInfo' },
     opts = {
       notify_on_error = false,
       format_on_save = function(bufnr)
         local disable_filetypes = { c = true, cpp = true }
         return {
-          timeout_ms = 500,
+          timeout_ms = 2500,
           lsp_fallback = not disable_filetypes[vim.bo[bufnr].filetype],
         }
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
-        javascript = { { 'prettierd', 'prettier' } },
-        html = { 'prettier' },
+        javascript = { 'prettierd' },
+        html = { 'prettierd' },
+        json = { 'prettierd' },
       },
     },
   },
@@ -313,6 +330,7 @@ require('lazy').setup({
   },
 
   { -- Colorscheme
+    priority = 1000,
     'folke/tokyonight.nvim',
     opts = {
       transparent = true,
@@ -321,7 +339,6 @@ require('lazy').setup({
         floats = 'transparent',
       },
     },
-    priority = 1000,
     init = function()
       vim.cmd.colorscheme 'tokyonight-night'
       vim.cmd.hi 'Comment gui=none'
@@ -332,7 +349,22 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'bash', 'c', 'html', 'lua', 'luadoc', 'markdown', 'vim', 'vimdoc' },
+      ensure_installed = {
+        'bash',
+        'c',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+        'javascript',
+        'typescript',
+        'tsx',
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -347,6 +379,24 @@ require('lazy').setup({
     end,
   },
 
+  { -- Auto tag close for html
+    'windwp/nvim-ts-autotag',
+    opts = {
+      -- Defaults
+      enable_close = true, -- Auto close tags
+      enable_rename = true, -- Auto rename pairs of tags
+      enable_close_on_slash = false, -- Auto close on trailing </
+    },
+    -- Also override individual filetype configs, these take priority.
+    -- Empty by default, useful if one of the "opts" global settings
+    -- doesn't work well in a specific filetype
+    per_filetype = {
+      ['html'] = {
+        enable_close = false,
+      },
+    },
+  },
+
   { -- Code context
     'nvim-treesitter/nvim-treesitter-context',
   },
@@ -355,43 +405,18 @@ require('lazy').setup({
     'folke/trouble.nvim',
     opts = {}, -- for default options, refer to the configuration section for custom setup.
     cmd = 'Trouble',
+  },
+
+  { -- Todo Comments
+    'folke/todo-comments.nvim',
+    event = 'VimEnter',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    opts = { signs = false },
     keys = {
-      {
-        '<leader>xx',
-        '<cmd>Trouble diagnostics toggle<cr>',
-        desc = 'Diagnostics (Trouble)',
-      },
-      {
-        '<leader>xX',
-        '<cmd>Trouble diagnostics toggle filter.buf=0<cr>',
-        desc = 'Buffer Diagnostics (Trouble)',
-      },
-      {
-        '<leader>cs',
-        '<cmd>Trouble symbols toggle focus=false<cr>',
-        desc = 'Symbols (Trouble)',
-      },
-      {
-        '<leader>cl',
-        '<cmd>Trouble lsp toggle focus=false win.position=right<cr>',
-        desc = 'LSP Definitions / references / ... (Trouble)',
-      },
-      {
-        '<leader>xL',
-        '<cmd>Trouble loclist toggle<cr>',
-        desc = 'Location List (Trouble)',
-      },
-      {
-        '<leader>xQ',
-        '<cmd>Trouble qflist toggle<cr>',
-        desc = 'Quickfix List (Trouble)',
-      },
+      { '<leader>st', '<cmd>TodoTelescope<cr>', desc = 'Todo' },
     },
   },
 
-  { -- Import custom plugins
-    import = 'custom.plugins',
-  },
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
     config = function()
@@ -423,20 +448,11 @@ require('lazy').setup({
 
       -- Filetree
       require('mini.files').setup()
-
-      -- Starter
-      require('mini.starter').setup {
-        header = 'I use neovim btw',
-        items = {
-          { name = 'New file', action = 'ene', section = '' },
-          { name = 'Find files', action = ':Telescope find_files', section = '' },
-          { name = 'Recent files', action = ':Telescope oldfiles', section = '' },
-          { name = 'Grep string', action = ':Telescope live_grep', section = '' },
-          { name = 'Lazy', action = ':Lazy', section = '' },
-          { name = 'Quit', action = ':qa!', section = '' },
-        },
-      }
     end,
+  },
+
+  {
+    import = 'custom.plugins',
   },
 }, {
   ui = {
