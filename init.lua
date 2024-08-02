@@ -30,23 +30,6 @@ vim.api.nvim_create_autocmd('VimEnter', {
 })
 
 require('lazy').setup({
-  { -- Detect tabstop and shiftwidth automatically
-    'tpope/vim-sleuth',
-  },
-
-  { -- Adds git related signs to the gutter as well as utilities for managing changes
-    'lewis6991/gitsigns.nvim',
-    opts = {
-      signs = {
-        add = { text = '+' },
-        change = { text = '~' },
-        delete = { text = '_' },
-        topdelete = { text = '‾' },
-        changedelete = { text = '~' },
-      },
-    },
-  },
-
   { -- Fuzzy Finder (files lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
@@ -93,6 +76,7 @@ require('lazy').setup({
 
   { -- LSP Configuration & Plugins
     'neovim/nvim-lspconfig',
+    event = 'VeryLazy',
     dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       'williamboman/mason.nvim',
@@ -256,7 +240,7 @@ require('lazy').setup({
 
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
-    event = 'InsertEnter',
+    event = 'VeryLazy',
     dependencies = {
       {
         'L3MON4D3/LuaSnip',
@@ -295,17 +279,11 @@ require('lazy').setup({
         mapping = cmp.mapping.preset.insert {
 
           ['<C-n>'] = cmp.mapping.select_next_item(),
-
           ['<C-p>'] = cmp.mapping.select_prev_item(),
-
           ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-
           ['<C-f>'] = cmp.mapping.scroll_docs(4),
-
           ['<CR>'] = cmp.mapping.confirm { select = true },
-
           ['<C-Space>'] = cmp.mapping.complete {},
-
           ['<C-l>'] = cmp.mapping(function()
             if luasnip.expand_or_locally_jumpable() then
               luasnip.expand_or_jump()
@@ -316,9 +294,6 @@ require('lazy').setup({
               luasnip.jump(-1)
             end
           end, { 'i', 's' }),
-
-          -- For more advanced Luasnip keymaps (e.g. selecting choice nodes expansion) see:
-          --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
         },
         sources = {
           { name = 'nvim_lsp' },
@@ -347,6 +322,7 @@ require('lazy').setup({
 
   { -- Highlight edit, and navigate code
     'nvim-treesitter/nvim-treesitter',
+    event = 'VeryLazy',
     build = ':TSUpdate',
     opts = {
       ensure_installed = {
@@ -379,46 +355,14 @@ require('lazy').setup({
     end,
   },
 
-  { -- Auto tag close for html
-    'windwp/nvim-ts-autotag',
-    opts = {
-      -- Defaults
-      enable_close = true, -- Auto close tags
-      enable_rename = true, -- Auto rename pairs of tags
-      enable_close_on_slash = false, -- Auto close on trailing </
-    },
-    -- Also override individual filetype configs, these take priority.
-    -- Empty by default, useful if one of the "opts" global settings
-    -- doesn't work well in a specific filetype
-    per_filetype = {
-      ['html'] = {
-        enable_close = false,
-      },
-    },
-  },
-
   { -- Code context
     'nvim-treesitter/nvim-treesitter-context',
-  },
-
-  { -- Prettier Errors
-    'folke/trouble.nvim',
-    opts = {}, -- for default options, refer to the configuration section for custom setup.
-    cmd = 'Trouble',
-  },
-
-  { -- Todo Comments
-    'folke/todo-comments.nvim',
-    event = 'VimEnter',
-    dependencies = { 'nvim-lua/plenary.nvim' },
-    opts = { signs = false },
-    keys = {
-      { '<leader>st', '<cmd>TodoTelescope<cr>', desc = 'Todo' },
-    },
+    event = 'VeryLazy',
   },
 
   { -- Collection of various small independent plugins/modules
     'echasnovski/mini.nvim',
+    event = 'VeryLazy',
     config = function()
       -- Better Around/Inside textobjects
       require('mini.ai').setup { n_lines = 500 }
@@ -450,7 +394,6 @@ require('lazy').setup({
       require('mini.files').setup()
     end,
   },
-
   {
     import = 'custom.plugins',
   },
@@ -470,6 +413,20 @@ require('lazy').setup({
       start = '🚀',
       task = '📌',
       lazy = '💤 ',
+    },
+  },
+  performance = {
+    rtp = {
+      disabled_plugins = {
+        'gzip',
+        'matchit',
+        'matchparen',
+        'netrwPlugin',
+        'tarPlugin',
+        'tohtml',
+        'tutor',
+        'zipPlugin',
+      },
     },
   },
 })
